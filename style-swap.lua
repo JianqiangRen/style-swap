@@ -187,6 +187,17 @@ end
 
 print(swap)
 
+
+function stripextension(filename)  
+    local idx = filename:match(".+()%.%w+$")  
+    if(idx) then  
+        return filename:sub(1, idx-1)  
+    else  
+        return filename  
+    end  
+end  
+
+
 function swapTransfer(img, name)
     if opt.saveOriginal then
         image.save(opt.save .. '/' .. name, img)
@@ -230,8 +241,8 @@ function swapTransfer(img, name)
         x = synth(img)
     end
 
-    ext = paths.extname(name)
-    image.save(opt.save .. '/' .. string.gsub(name, '.' .. ext, '_stylized.' .. ext), x)
+
+    image.save(opt.save..'/'..name, x)
 
     criterion.net:clearState()
 
@@ -249,17 +260,30 @@ if opt.content ~= '' then
     end
 
     name = paths.basename(opt.content)
+    ext = paths.extname(name)
     for i=1,opt.numSwap do
-        img = swapTransfer(img, name)
+        local style_name = string.match(opt.style, ".+/(.+)")
+        style_name = stripextension(style_name)
+        name = stripextension(name).."_stylized_"
+        name = name..style_name
+        print("name",name)
+        img = swapTransfer(img, name..'.'..ext)
     end
 else
     imageLoader = ImageLoader(opt.contentBatch)
     imageLoader:setMaximumSize(opt.maxContentSize)
 
+
     for i=1, #imageLoader.files do
         img,name = imageLoader:next()
+        ext = paths.extname(name)
         for i=1,opt.numSwap do
-            img = swapTransfer(img, name)
+            local style_name = string.match(opt.style, ".+/(.+)")
+            style_name = stripextension(style_name)
+            name = stripextension(name).."_stylized_"
+            name = name..style_name
+            print("name",name)
+            img = swapTransfer(img, name..'.'..ext)
         end
     end
 end
